@@ -19,8 +19,9 @@ module.exports = app => {
             const verify =  await app.db('users')
             .where('nome', request.body.nome)
             .first()
-    
-            if (verify > 0) {
+
+            
+            if (verify) {
                 return response.status(400).json({"erro":"Nome de usuario ja existe"})
             }
     
@@ -156,6 +157,7 @@ module.exports = app => {
         .first();;
         }
 
+        console.log('login')
         if (user == '') {return response.status(400).json("Usuario nao encontrado")}
         return response.status(200).json(user)
         }
@@ -165,58 +167,125 @@ module.exports = app => {
     const fav = async (request, response) => {
 
 
-        // const manga = await app.db('mangas')
-        // .where('name', request.body.manga)
-        // .select('*')
-        // .first()
+        const manga = await app.db('mangas')
+        .where('name', request.body.manga)
+        .select('*')
+        .first()
+        
+        
         
 
-        // if(!manga){
-        //    return response.status(400).send("manga não encontrado")
-        // }
+        if(!manga){
+           return response.status(400).send("manga não encontrado")
+        }
         
-        const user = await app.db('users')
+        const userFav = await app.db('users')
         .where('id', request.user.id)
         .select('favoritos')
         .first()
 
+        if (userFav["favoritos"]["size"] == undefined){
 
-        if (!user["favoritos"]  == ''){
-            const favoritos = {favoritos: request.body.manga}
-
+            const favoritos = {favoritos: [request.body.manga], size: 1}
 
             const upd = await app.db('users')
             .where('id',  request.user.id)
-            .update(favoritos)
+            .update({favoritos})
             .then(response.status(202).send())
             .catch(err => response.status(500).json(err))
 
-            
+    
         }
 
 
-        let favoritos = user["favoritos"].split(',')
-        
-        for (i = 0; i < favoritos.length; i++){
-            if (favoritos[i] === request.body.manga){
-                favoritos.splice(i)
+        let favoritos = userFav["favoritos"]
+
+
+        for (i = 0; i < favoritos['size']; i++){
+
+            if (favoritos['favoritos'][i] === request.body.manga){
+                
+                favoritos['favoritos'].splice(i)
+                favoritos['size'] = favoritos['size'] - 1
                 const upd = await app.db('users')
-                .where('id', id)
-                .update({'favoritos': favoritos.sort().join(',')})
-                return response.status(200).json("Removido")
+                .where('id', request.user.id)
+                .update({favoritos})
+                .then(_ => response.status(202).send())
+                .catch(err => response.status(500).json(err))
+                return
+   
             }
         }
 
     
-        favoritos.push(request.body.manga)
+        favoritos['favoritos'].push(request.body.manga)
+        favoritos['size'] = favoritos['size'] + 1
 
       
         const upd = await app.db('users')
         .where('id', request.user.id)
-        .update({'favoritos': favoritos.join(',')})
- 
-        return response.status(200).json("Adicionado")
+        .update({favoritos})
+        .then(_ => response.status(202).send())
+        .catch(err => response.status(500).json(err))
+
     }
 
-    return { create, del, updateManga, verify, fav}
+    const addRemoveVisto = async (request, response) => {
+
+       const listDb =  await app.db('users')
+       .where('id', request.user.id)
+       .select('mangas')
+       .first()
+       
+        let mangas = listDb['mangas']
+
+        
+
+
+       for (let i = 0 ; i < mangas['mangas'].length; i++) {
+
+           if (mangas['mangas'][i]["nome"] == request.body.name) {
+
+             mangas['mangas'].splice(i,1)
+
+                app.db('users')
+                .where('id',request.user.id)
+                .update({mangas})
+                .then(_ => response.status(202).send())
+                .catch(err => response.status(500).json(err))
+               
+                return 
+           }
+       }
+
+       const listMangaDb = await app.db('mangas')
+       .where('name', request.body.name)
+       .select('capitulos')
+       .first()
+       .catch(err => response.status(500).json(err))
+
+       if(!listMangaDb){
+
+           return response.status(400).send('manga nao encontrado')
+       }else {
+
+        objManga = {'nome': request.body.name, 'total': listMangaDb['capitulos']['1'].length, 'capitulos': listMangaDb['capitulos']['1'] }
+
+        
+           mangas['mangas'].push(objManga)
+           console.log(mangas)
+
+           app.db('users')
+           .where('id', request.user.id)
+           .update({mangas})
+           .then(_ => response.status(202).send())
+           .catch(err => response.status(500).json(err))
+
+           
+
+       }
+
+    }
+
+    return { create, del, updateManga, verify, fav, addRemoveVisto}
 }

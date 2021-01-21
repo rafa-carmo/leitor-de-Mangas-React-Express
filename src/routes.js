@@ -12,24 +12,47 @@ module.exports = app => {
     .all(app.src.config.passport.authenticate())
     .post( app.src.controllers.userController.fav)
 
+    app.route('/mangas')
+    .all(app.src.config.passport.authenticate())
+    .post(app.src.controllers.mangasController.index)
+
+    app.route('/mangas/remove/:id')
+    .all(app.src.config.passport.authenticate())
+    .put(app.src.controllers.userController.addRemoveVisto)
+
+
+    app.route('/mangas/add')
+    .all(app.src.config.passport.authenticate())
+    .post(app.src.controllers.mangasController.create)
+
+    app.route('/mangas/del/:id')
+    .all(app.src.config.passport.authenticate())
+    .delete(app.src.controllers.mangasController.delet)
+
+    app.route('/mangas/upd')
+    .all(app.src.config.passport.authenticate())
+    .put(app.src.controllers.mangasController.update)
+
+
+    app.route('/manga/:name')
+    .all(app.src.config.passport.authenticate())
+    .get(app.src.controllers.infoController.index)
+
+
+    app.route('/usr/add/manga')
+    .all(app.src.config.passport.authenticate())
+    .post(app.src.controllers.infoController.addCap)
+
+    app.route('/mangas/pg')
+    .all(app.src.config.passport.authenticate())
+    .post(app.src.controllers.infoController.readDir)
+
 }
 
 
 
 
 
-// const express = require('express');
-
-// const routes = express.Router();
-// const MangasController = require('./controllers/mangasController')
-// const UsersController = require('./controllers/userController')
-// const InfoController = require('./controllers/infoController')
-// const SearchController = require('./controllers/searchController')
-
-// routes.post('/mangas', MangasController.index);
-// routes.post('/mangas/add', MangasController.create)
-// routes.delete('/mangas/del/:id', MangasController.delete)
-// routes.put('/manga/update', MangasController.update)
 
 // routes.get('/manga/:name', InfoController.index)
 // routes.post('/files/info', InfoController.info)
