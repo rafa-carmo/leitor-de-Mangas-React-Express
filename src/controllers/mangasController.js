@@ -12,8 +12,8 @@ module.exports= app => {
         let mangas = await app.db('mangas')
         .orderBy(tipo, ordem)
         .select('*');
-		
-		if (!request.user.id){
+
+		if (!request.user){
 
 			return response.json(mangas)
         }
@@ -33,16 +33,19 @@ module.exports= app => {
                 mangas[i].favorito =false
             }
         }
+            if (request.user.mangas.mangas){
+            for (let j = 0; j < request.user.mangas.mangas.length; j++){
 
-            for (let j = 0; j < request.user.mangas.length; j++){
-                if (user[j].nome == mangas[i].name){
-                    mangas[i].totalCapitulos =  mangas[i].totalCapitulos - user[j].total
+           
+
+                if (request.user.mangas.mangas[j].nome == mangas[i].name){
+   
+                    mangas[i].totalCapitulos =  mangas[i].totalCapitulos - request.user.mangas.mangas[j].total
                 }
             }
-        }
 
+           }}
 
-        
         return response.json(mangas)
 }
 
@@ -79,14 +82,20 @@ const create = async (request, response)  => {
     req['ultima_alteracao'] = new Date()
     req['totalCapitulos'] = req.capitulos['1'].length;
 
-    await app.db('mangas')
+
+    const addManga = await app.db('mangas')
+    .returning('id')
     .insert(request.body)
+    .then(data => {
+        updLastManga(data[0], req.name, req.capitulos['1'][req.capitulos['1'].length - 1])
+    })
     .then(_ => response.status(202).send())
     .catch(err => console.log(err))
-
     
 
+
     }
+
 
 const delet = async (request, response) => {
         
@@ -110,7 +119,7 @@ const update = async (request, response) => {
     
         const mangaCapitulos = await app.db('mangas')
         .where('id', request.body.id)
-        .select(['capitulos', 'totalCapitulos'])
+        .select(['capitulos', 'totalCapitulos', 'name'])
         .first()
         .catch(err => response.status(400).json(err))
 
@@ -147,12 +156,85 @@ const update = async (request, response) => {
             totalCapitulos,
             'ultima_alteracao': str_data
         })
+        .then(data => {
+            updLastManga(request.body.id, mangaCapitulos["name"], request.body.capitulo)
+        })
         .then(_ => response.status(202).send())
         .catch(err => response.status(500).json(err))
 
         
 
     }
+    
 
-    return {index, create, delet, update}
+    
+const updLastManga = async ( id, name, chapter) => {
+
+    const list = await app.db("last_mangas")
+    .select('*')
+
+    const created = new Date()
+
+    if(list.length >= 13) {
+       
+
+        app.db('last_mangas')
+        .where('id', list[0].id)
+        .del()
+        .then(rowDeleted => {
+            if (rowDeleted > 0) {
+               
+            }
+        })
+        .catch(err=> console.log(err))
+    }
+
+
+
+
+    app.db('last_mangas')
+    .insert({name, chapter, created,  mangaId: id})
+    .catch(err => console.log(err))
+
+}
+
+
+const lastReturn = async ( request, response ) => {
+    app.db('last_mangas')
+    .orderBy('created', 'desc')
+    .select('*')
+    .then(data => response.status(200).json(data))
+    .catch(err => response.status(500).json(err))
+
+
+}
+
+
+const genreList = async (request, response) => {
+    const allMangas = await app.db('mangas')
+    .select('generos')
+
+
+    let listGenres = []
+    for (let c = 0; c < allMangas.length; c++) {
+
+
+
+        for (let d = 0; d < allMangas[c]['generos']['generos'].length; d++){
+
+                if (!listGenres.includes(allMangas[c]['generos']['generos'][d].trim())) {
+
+                    listGenres.push(allMangas[c]['generos']['generos'][d].trim())
+                }
+        
+        }
+    }
+    return response.status(200).json({listGenres})
+    
+    
+}
+
+
+
+    return {index, create, delet, update, lastReturn, genreList}
 }

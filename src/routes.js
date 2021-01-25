@@ -34,7 +34,7 @@ module.exports = app => {
     .put(app.src.controllers.mangasController.update)
 
 
-    app.route('/manga/:name')
+    app.route('/manga/:id')
     .all(app.src.config.passport.authenticate())
     .get(app.src.controllers.infoController.index)
 
@@ -46,6 +46,17 @@ module.exports = app => {
     app.route('/mangas/pg')
     .all(app.src.config.passport.authenticate())
     .post(app.src.controllers.infoController.readDir)
+
+
+    app.route('/mangas/last')
+    .all(app.src.config.passport.authenticate())
+    .get(app.src.controllers.mangasController.lastReturn)
+
+
+
+    app.route('/mangas/genre')
+    .all(app.src.config.passport.authenticate())
+    .get(app.src.controllers.mangasController.genreList)
 
 }
 

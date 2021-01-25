@@ -4,6 +4,8 @@ const passportJwt = require('passport-jwt')
 const { Strategy, ExtractJwt } = passportJwt
 
 module.exports = app => {
+    
+
     const params = {
         secretOrKey: authSecret,
         jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -11,6 +13,7 @@ module.exports = app => {
     }
 
     const strategy = new Strategy(params, (payload, done) => {
+        
         app.db('users')
             .where({id: payload.id})
             .first()
@@ -27,7 +30,6 @@ module.exports = app => {
     })
 
     passport.use(strategy)
-
     return {   
         initialize: () => passport.initialize(),
         authenticate: () => passport.authenticate('jwt', {session: false})

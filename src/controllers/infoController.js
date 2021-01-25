@@ -1,5 +1,4 @@
-
-
+const path = require('path')
 const fs = require('fs');
 
 function readDir(dir){
@@ -29,11 +28,12 @@ function readDir(dir){
 module.exports= app => {
 
 
+
     const index = async (request, response) => {
 
 
-        const manga = await app.db('mangas')
-        .where('name', request.params.name)
+        let manga = await app.db('mangas')
+        .where('id', request.params.id)
         .select('*')
         .first()
         .catch(err => response.status(500).json(err))
@@ -55,33 +55,37 @@ module.exports= app => {
         }
         
 
-        const capitulos = manga.capitulos['1'].sort(function(a, b){return a-b})
+        manga['capitulos'] = manga.capitulos['1'].sort(function(a, b){return a-b})
 
         if (!manga) {
             response.json("ID nao encontrado")
         }
-        response.json([manga, capitulos, lista])
+        response.json(manga)
 
     }
 
 //??
     const readDir = async (request, response) => { 
 
-        const {nome, capitulo} = request.body
-
-
-        const files = fs.readdirSync(`../mangas/${nome}/${capitulo}`)
+        const {id, capitulo} = request.body
         const capitulos = await app.db('mangas')
-        .where('name', nome)
-        .select('capitulos')
+        .where('id', id)
+        .select(['capitulos', 'name'])
         .first()
 
-        const capitulosOrdenados = capitulos["capitulos"].split(',').sort(function(a, b){return a-b})
+
+
+
+        const files = fs.readdirSync(path.join(__dirname, '..','mangas',capitulos['name'], capitulo))
+
+
+        const capitulosOrdenados = capitulos["capitulos"]['1'].sort(function(a, b){return a-b})
         const filesSorted= files.sort()
 
         const data = {
             capitulosOrdenados,
-            filesSorted
+            filesSorted,
+            name: capitulos['name']
 
         }
 
@@ -104,7 +108,6 @@ module.exports= app => {
         if (Object.keys(listaDB['mangas']).length == 0) {
             
             const mangas = {'mangas': [ {'nome':nome,'total':1,'capitulos': [capitulo] } ] }
-            console.log(mangas, listaDB)
             const updCapitulo = await app.db('users')
             .where('id', request.user.id)
             .update({mangas})
