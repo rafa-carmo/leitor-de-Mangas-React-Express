@@ -236,30 +236,38 @@ module.exports = app => {
        .where('id', request.user.id)
        .select('mangas')
        .first()
+
        
         let mangas = listDb['mangas']
 
-        
 
+        if (Object.keys(mangas).length !== 0 && mangas.constructor !== Object  ) {
+            mangas['mangas'] = []
+        }
+        if (mangas['mangas'].length != 0) {
+            
+            for (let i = 0 ; i < mangas['mangas'].length; i++) {
 
-       for (let i = 0 ; i < mangas['mangas'].length; i++) {
+                if (mangas['mangas'][i]["id"] == request.params.id) {
+     
+                  mangas['mangas'].splice(i,1)
+     
+                     app.db('users')
+                     .where('id',request.user.id)
+                     .update({mangas})
+                     .then(_ => response.status(202).send())
+                     .catch(err => response.status(500).json(err))
+                    
+                     return 
+                }
+        }
+       
 
-           if (mangas['mangas'][i]["nome"] == request.body.name) {
-
-             mangas['mangas'].splice(i,1)
-
-                app.db('users')
-                .where('id',request.user.id)
-                .update({mangas})
-                .then(_ => response.status(202).send())
-                .catch(err => response.status(500).json(err))
-               
-                return 
-           }
+   
        }
 
        const listMangaDb = await app.db('mangas')
-       .where('name', request.body.name)
+       .where('id', request.params.id)
        .select('capitulos')
        .first()
        .catch(err => response.status(500).json(err))
@@ -269,11 +277,18 @@ module.exports = app => {
            return response.status(400).send('manga nao encontrado')
        }else {
 
-        objManga = {'nome': request.body.name, 'total': listMangaDb['capitulos']['1'].length, 'capitulos': listMangaDb['capitulos']['1'] }
 
-        
+        objManga = {'id': request.params.id, 'total': listMangaDb['capitulos']['1'].length, 'capitulos': listMangaDb['capitulos']['1'] }
+
+
+
+
+        if (Object.keys(mangas).length === 0 && mangas.constructor === Object  ) {
+            mangas['mangas']= [objManga]
+        }else {
+                
            mangas['mangas'].push(objManga)
-           console.log(mangas)
+        }
 
            app.db('users')
            .where('id', request.user.id)

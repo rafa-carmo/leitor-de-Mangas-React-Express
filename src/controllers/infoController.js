@@ -39,21 +39,20 @@ module.exports= app => {
         .catch(err => response.status(500).json(err))
 
 
-        
+        let lista = []
 
-        const objUser = request.user.mangas
+        const objUser = request.user.mangas['mangas']
 
 		for (let i = 0; i < objUser.length; i++){
-            if (request.params.name === objUser[i]['nome']){
-                var lista = objUser[i]["capitulos"].sort(function(a, b){return a-b})
+            if (request.params.id === objUser[i]['id']){
+
+                lista = objUser[i]["capitulos"].sort(function(a, b){return a-b})
                 break
             }
         }
 
-        if (!lista){
-            var lista = []
-        }
-        
+  
+       manga['capitulosRestantes'] = lista.length - manga.capitulos['1'].length
 
         manga['capitulos'] = manga.capitulos['1'].sort(function(a, b){return a-b})
 

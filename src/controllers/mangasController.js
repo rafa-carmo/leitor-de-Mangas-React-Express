@@ -13,39 +13,40 @@ module.exports= app => {
         .orderBy(tipo, ordem)
         .select('*');
 
-		if (!request.user){
-
-			return response.json(mangas)
-        }
-        
-        
 
            for (let i = 0; i< mangas.length; i++){
 
-            if (request.user.favoritos['favoritos']){
+                if (request.user.favoritos['favoritos']){
 
-            if (request.user.favoritos['favoritos'].includes(mangas[i].name)){
+                    if (request.user.favoritos['favoritos'].includes(mangas[i].name)){
 
-                mangas[i].favorito = true
+                        mangas[i].favorito = true
 
+                    }
+                    else{
+                        mangas[i].favorito =false
+                    }
             }
-            else{
-                mangas[i].favorito =false
+                if (request.user.mangas.mangas){
+
+
+                for (let j = 0; j < request.user.mangas.mangas.length; j++){
+
+                    
+
+                    if (parseInt(request.user.mangas.mangas[j].id, 10) === mangas[i].id){
+                        
+    
+                        mangas[i].capitulosRestantes =  mangas[i].totalCapitulos - request.user.mangas.mangas[j].total
+                       
+                    }
+
+                    
+            
             }
+
+           }
         }
-            if (request.user.mangas.mangas){
-            for (let j = 0; j < request.user.mangas.mangas.length; j++){
-
-           
-
-                if (request.user.mangas.mangas[j].nome == mangas[i].name){
-   
-                    mangas[i].totalCapitulos =  mangas[i].totalCapitulos - request.user.mangas.mangas[j].total
-                }
-            }
-
-           }}
-
         return response.json(mangas)
 }
 

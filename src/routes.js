@@ -16,7 +16,7 @@ module.exports = app => {
     .all(app.src.config.passport.authenticate())
     .post(app.src.controllers.mangasController.index)
 
-    app.route('/mangas/remove/:id')
+    app.route('/mangas/view/:id')
     .all(app.src.config.passport.authenticate())
     .put(app.src.controllers.userController.addRemoveVisto)
 
